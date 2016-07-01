@@ -263,11 +263,11 @@ $( document ).ready( function() {
 		var renderCount = 0;
 		var subviewRenderCount = 0;
 
-		var SpecialSubviewClass = MySubviewClass.extend({
+		var SpecialSubviewClass = MySubviewClass.extend( {
 			render: function() {
 				subviewRenderCount += 1;
 			}
-		})
+		} )
 
 		var MyItemViewClass = Backbone.View.extend( {
 
@@ -297,6 +297,59 @@ $( document ).ready( function() {
 					equal( subviewRenderCount, parseInt(renderCount/2+1), "subview is rendered" );
 				else
 					equal( subviewRenderCount, renderCount/2, "subview is not rendered" );
+			}
+
+		} );
+
+		expect(4);
+
+		stop();
+
+		itemViewInstance = new MyItemViewClass();
+		itemViewInstance.render();
+		itemViewInstance.render();
+		itemViewInstance.render();
+	} );
+
+	asyncTest( "Subviews receive 'remove' when not in latest render", function() {
+
+		var renderCount = 0;
+		var subviewRemoveCount = 0;
+
+		var SpecialSubviewClass = MySubviewClass.extend( {
+			onRemove: function() {
+				subviewRemoveCount += 1;
+			}
+		} );
+
+		var MyItemViewClass = Backbone.View.extend( {
+
+			el : "#container",
+
+			initialize : function() {
+				Backbone.Subviews.add( this );
+				this.render();
+			},
+			render : function() {
+				renderCount += 1;
+				if (renderCount % 2)
+					this.$el.html( "<div data-subview=\"mySubview\"></div>" );
+				else
+					this.$el.html( "" );
+			},
+
+			subviewCreators : {
+				mySubview : function() {
+					return new SpecialSubviewClass();
+				}
+			},
+
+			onSubviewsRendered : function() {
+				if (renderCount < 3) start();
+				if (renderCount % 2)
+					equal( subviewRemoveCount, parseInt(renderCount/2), "subview is rendered" );
+				else
+					equal( subviewRemoveCount, renderCount/2, "subview is not rendered" );
 			}
 
 		} );

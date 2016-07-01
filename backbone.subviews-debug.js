@@ -96,8 +96,9 @@
 
 		function _postrender() {
 			var _this = this;
+			var toRender = _.reduce(this.subviews, function (o, i, k) { o[k] = false; return o }, {});
 			this.subviewCreators = this.subviewCreators || {};
-			
+
 			// Support subviewCreators as both objects and functions.
 			if( _.isFunction( this.subviewCreators ) ) this.subviewCreators = this.subviewCreators();
 
@@ -121,8 +122,21 @@
 				}
 
 				thisPlaceHolderDiv.replaceWith( newSubview.$el );
-				if( debugMode ) console.group( "Rendering subview " + newSubview );
-				newSubview.render();
+				toRender[ subviewName ] = true;
+			} );
+
+			// Now that all subviews have been created, render them one at a time, in the
+			// order they occur in the DOM.
+			_.each(toRender, function(render, name) {
+				if (render) {
+					if( debugMode ) console.group( "Rendering subview " + subviewName );
+					_this.subviews[ name ].render();
+				} else {
+					if( debugMode ) console.group( "Removing subview " + subviewName );
+					if (_this.subviews[ name ].onRemove) _this.subviews[ name ].onRemove();
+					_this.subviews[ name ].remove();
+					delete _this.subviews[ name ];
+				}
 			} );
 			if( debugMode ) console.groupEnd();
 

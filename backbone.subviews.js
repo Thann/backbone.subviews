@@ -83,11 +83,12 @@
 
 	function _postrender() {
 		var _this = this;
+		var toRender = _.reduce(this.subviews, function (o, i, k) { o[k] = false; return o }, {});
 		this.subviewCreators = this.subviewCreators || {};
 
 		// Support subviewCreators as both objects and functions.
 		if( _.isFunction( this.subviewCreators ) ) this.subviewCreators = this.subviewCreators();
-		
+
 		this.$( "[data-subview]" ).each( function() {
 			var thisPlaceHolderDiv = $( this );
 			var subviewName = thisPlaceHolderDiv.attr( "data-subview" );
@@ -108,7 +109,19 @@
 			}
 
 			thisPlaceHolderDiv.replaceWith( newSubview.$el );
-			newSubview.render();
+			toRender[ subviewName ] = true;
+		} );
+
+		// Now that all subviews have been created, render them one at a time, in the
+		// order they occur in the DOM.
+		_.each(toRender, function(render, name) {
+			if (render) {
+				_this.subviews[ name ].render();
+			} else {
+				if (_this.subviews[ name ].onRemove) _this.subviews[ name ].onRemove();
+				_this.subviews[ name ].remove();
+				delete _this.subviews[ name ];
+			}
 		} );
 
 		// Call this.onSubviewsRendered after everything is done (hook for application defined logic)
