@@ -121,15 +121,10 @@
 				}
 
 				thisPlaceHolderDiv.replaceWith( newSubview.$el );
+				if( debugMode ) console.group( "Rendering subview " + newSubview );
+				newSubview.render();
 			} );
-
-			// Now that all subviews have been created, render them one at a time, in the
-			// order they occur in the DOM.
-			_.each( this.subviews, function( thisSubview, subviewName ) {
-				if( debugMode ) console.group( "Rendering subview " + subviewName );
-				thisSubview.render();
-				if( debugMode ) console.groupEnd();
-			} );
+			if( debugMode ) console.groupEnd();
 
 			// Call this.onSubviewsRendered after everything is done (hook for application defined logic)
 			if( _.isFunction( this.onSubviewsRendered ) ) this.onSubviewsRendered.call( this );
